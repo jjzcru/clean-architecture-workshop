@@ -1,0 +1,436 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Pokemon
+servers:
+  - url: http://localhost:8080
+paths:
+  /:
+    get:
+      summary: Health Check
+      operationId: healthCheck
+      description: |
+        This is an endpoint use for `health check` if the service is up.
+      tags:
+        - health
+      responses:
+        '200':
+          description: Return if the health check is success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /login:
+    post:
+      summary: Authenticate
+      description: |
+          This endpoint helps for authentication users, it uses a `json` body 
+          with the arguments `username` and `password`, it returns a `token` 
+          that is going to be used to identify the user.
+      operationId: login
+      tags:
+        - auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Credentials'
+      responses:
+        '200':
+          description: Return authentication token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Token"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /register:
+    post:
+      summary: Register
+      description: |
+          This endpoint enables users to register.
+      operationId: register
+      tags:
+        - auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '200':
+          description: Return the user data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RegisterResponse"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /pokemon:
+    get:
+      summary: Search Pokemon by Name
+      operationId: searchPokemon
+      description: |
+        This endpoints get information from a pokemon by its name. If the query 
+        param `name` is missing it should return a `Bad Request`.
+      tags:
+        - pokemon
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: search
+          required: true
+          schema:
+            type: string
+          description: Search 
+      responses:
+        '200':
+          description: Return the pokemon that was found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pokemon"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /pokemon/{id}:
+    get:
+      summary: Search Pokemon by Id
+      operationId: searchPokemonById
+      description: |
+        This endpoint should return a pokemon by it's `id`.
+      tags:
+        - pokemon
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The id of the todo to delete
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Return the pokemon by its id
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pokemon"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /pokemon/roster:
+    post:
+      summary: Add Pokemon to Roster
+      operationId: addPokemonToRoster
+      description: |
+        A `roster` is like a folder that stores all the pokemon that you have 
+        access, you can only have a unique pokemon in a `roster`. If an 
+        existing pokemon is added to the user `roster` nothing should change. 
+
+        A user can only have `10` pokemons in the roster, if more than `10` 
+        pokemons are added it needs to throw a `Conflict` error.
+      tags:
+        - pokemon
+        - roster
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddPokemonRequest'
+      responses:
+        '200':
+          description: Expected response to be the todo that was removed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pokemon"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    get:
+      summary: Get Pokemon Roster
+      operationId: getPokemonRoster
+      description: |
+        Get a list of all the Pokemons that exist in the `roster`.
+      tags:
+        - pokemon
+        - roster
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Return the list of the `pokemons` that exist in the `roster`
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pokemons"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /pokemon/roster/{id}:
+    delete:
+      summary: Remove pokemon from roster
+      operationId: deletePokemonFromRoster
+      description: |
+        This endpoint removes a pokemon in the roster, if the pokemon is not 
+        found the endpoint should throw a `Not found` error. When you remove a 
+        pokemon from the roster, if it also exist in the `party`, it needs 
+        to be removed as well.
+      tags:
+        - pokemon
+        - roster
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The id of the `pokemon` to delete
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Expected response to be the todo that was removed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pokemon"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /pokemon/party:
+    post:
+      summary: Add pokemon to party
+      operationId: addPokemonToParty
+      description: |
+        A `party` is a group of pokemons that a user has, to add a pokemon 
+        the `party` it needs to be added to the `roster` first. A user can 
+        only have a max of `6` pokemons. If more are added the endpoint 
+        needs to throw a `Conflict` error.
+      tags:
+        - pokemon
+        - party
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddPokemonRequest'
+      responses:
+        '200':
+          description: Expected response to be the todo that was removed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pokemon"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    get:
+      summary: Get Pokemon Party
+      operationId: getPokemonParty
+      description: |
+        This endpoint return a list of all the pokemons that exist in the 
+        user `party`.
+      tags:
+        - pokemon
+        - party
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: | 
+            Return the list of the `pokemons` that exist in the `party`
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pokemons"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /pokemon/party/{id}:
+    delete:
+      summary: Remove pokemon from party
+      operationId: deletePokemonFromParty
+      description: |
+        This is an endpoint that removes a pokemon from its `party`. If the 
+        pokemon no longer exist the endpoint needs to throw a `Not found` error.
+      tags:
+        - pokemon
+        - party
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The id of the `pokemon` to delete
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Expected response to be the todo that was removed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pokemon"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+components:
+  securitySchemes:
+    bearerAuth:            # arbitrary name for the security scheme
+      type: http
+      scheme: bearer
+      bearerFormat: JWT    # optional, arbitrary value for documentation purposes
+  schemas:
+    Health:
+      type: object
+      required:
+        - success
+      properties:
+        success:
+          type: boolean
+    RegisterRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+    RegisterResponse:
+      type: object
+      required:
+        - id
+        - username
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+    AddPokemonRequest:
+        type: object
+        required:
+          - id
+        properties:
+          id:
+            type: string
+    Credentials:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+    Pokemons:
+      type: array
+      items:
+        $ref: '#/components/schemas/Pokemon'
+    Pokemon:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        height:
+          type: integer
+        weight:
+          type: integer
+        image:
+          type: string
+        abilities:
+          type: array
+          items:
+            type: string
+        moves:
+          type: array
+          items:
+            type: string
+        types:
+          type: array
+          items:
+            type: string
+        stats:
+          type: object
+          properties:
+            hp:
+              type: integer
+            attack:
+              type: integer
+            defense:
+              type: integer
+            specialAttack:
+              type: integer
+            specialDefense:
+              type: integer
+            speed:
+              type: integer
+    Token:
+      type: object
+      required:
+        - token
+      properties:
+        token:
+          type: string
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
