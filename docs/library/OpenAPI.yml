@@ -82,81 +82,69 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /pokemon:
+  /search:
     get:
-      summary: Search Pokemon by Name
-      operationId: searchPokemon
+      summary: Search Book
+      operationId: searchBook
       description: |
-        This endpoints get information from a pokemon by its name. If the query 
-        param `name` is missing it should return a `Bad Request`.
+        This endpoint search book by `isbn`.
       tags:
-        - pokemon
-      security:
-        - bearerAuth: []
+        - book
       parameters:
         - in: query
-          name: search
-          required: true
+          name: isbn
           schema:
             type: string
-          description: Search 
+          description: Search book from isbn
+        - in: query
+          name: title
+          schema:
+            type: string
+          description: Search book from title
       responses:
         '200':
-          description: Return the pokemon that was found
+          description: Return the book that was found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Pokemon"
+                $ref: "#/components/schemas/Book"
         default:
           description: unexpected error
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /pokemon/{id}:
+  /library:
     get:
-      summary: Search Pokemon by Id
-      operationId: searchPokemonById
+      summary: Get the book that exist in the library
+      operationId: getBooksFromLibrary
       description: |
-        This endpoint should return a pokemon by it's `id`.
+        Return all the `books` that exist in the user library.
       tags:
-        - pokemon
+        - library
       security:
         - bearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: The id of the `pokemon` to delete
-          schema:
-            type: string
       responses:
         '200':
-          description: Return the pokemon by its id
+          description: Return the books that was found in the library
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Pokemon"
+                $ref: "#/components/schemas/BooksInLibrary"
         default:
           description: unexpected error
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /pokemon/roster:
-    post:
-      summary: Add Pokemon to Roster
-      operationId: addPokemonToRoster
+    put:
+      summary: Upsert book to library
+      operationId: upsertBook
       description: |
-        A `roster` is like a folder that stores all the pokemon that you have 
-        access, you can only have a unique pokemon in a `roster`. If an 
-        existing pokemon is added to the user `roster` nothing should change. 
-
-        A user can only have `10` pokemons in the roster, if more than `10` 
-        pokemons are added it needs to throw a `Conflict` error.
+        Upsert a book in the library by its id (the `isbn`), it also add 
+        `tags` to the book.
       tags:
-        - pokemon
-        - roster
+        - library
       security:
         - bearerAuth: []
       requestBody:
@@ -164,89 +152,103 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AddPokemonRequest'
+              $ref: '#/components/schemas/UpsertBookRequest'
       responses:
         '200':
-          description: Expected response to be the `pokemon` that was removed
+          description: Return the book that was added to the library.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Pokemon"
+                $ref: "#/components/schemas/BookInLibrary"
         default:
           description: unexpected error
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-    get:
-      summary: Get Pokemon Roster
-      operationId: getPokemonRoster
-      description: |
-        Get a list of all the Pokemons that exist in the `roster`.
-      tags:
-        - pokemon
-        - roster
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: Return the list of the `pokemons` that exist in the `roster`
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Pokemons"
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-  /pokemon/roster/{id}:
+  /library/{id}:
     delete:
-      summary: Remove pokemon from roster
-      operationId: deletePokemonFromRoster
+      summary: Delete book to library
+      operationId: deleteBookFromLibrary
       description: |
-        This endpoint removes a pokemon in the roster, if the pokemon is not 
-        found the endpoint should throw a `Not found` error. When you remove a 
-        pokemon from the roster, if it also exist in the `party`, it needs 
-        to be removed as well.
+        This endpoint remove the books from the library by its id.
       tags:
-        - pokemon
-        - roster
+        - library
       security:
         - bearerAuth: []
       parameters:
         - name: id
           in: path
           required: true
-          description: The id of the `pokemon` to delete
+          description: The id of the book to delete
           schema:
             type: string
       responses:
         '200':
-          description: Expected response to be the `pokemon` that was removed
+          description: Return the book that was deleted
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Pokemon"
+                $ref: "#/components/schemas/BookInLibrary"
         default:
           description: unexpected error
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /pokemon/party:
-    post:
-      summary: Add pokemon to party
-      operationId: addPokemonToParty
+  /collections:
+    get:
+      summary: Get collections
+      operationId: getCollections
       description: |
-        A `party` is a group of pokemons that a user has, to add a pokemon 
-        the `party` it needs to be added to the `roster` first. A user can 
-        only have a max of `6` pokemons. If more are added the endpoint 
-        needs to throw a `Conflict` error.
+        This endpoints return a list of all the `collections` from the user.
       tags:
-        - pokemon
-        - party
+        - collection
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Return a list of the `collections`.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Collections"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      summary: Add Collection
+      operationId: addCollection
+      description: |
+        Add a `collection` to the user
+      tags:
+        - collection
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Return the collection that was created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Collection"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /collections/{id}:
+    post:
+      summary: Add Book to Collection
+      operationId: addBookToCollection
+      description: |
+        This endpoint add a book to a `collection`.
+      tags:
+        - collection
       security:
         - bearerAuth: []
       requestBody:
@@ -254,71 +256,79 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AddPokemonRequest'
+              $ref: '#/components/schemas/AddBookToCollectionRequest'
       responses:
         '200':
-          description: Expected response to be the `pokemon` that was removed
+          description: Expected response to be the `book` that was removed
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Pokemon"
+                $ref: "#/components/schemas/BookInLibrary"
         default:
           description: unexpected error
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-    get:
-      summary: Get Pokemon Party
-      operationId: getPokemonParty
-      description: |
-        This endpoint return a list of all the pokemons that exist in the 
-        user `party`.
-      tags:
-        - pokemon
-        - party
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: | 
-            Return the list of the `pokemons` that exist in the `party`
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Pokemons"
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-  /pokemon/party/{id}:
     delete:
-      summary: Remove pokemon from party
-      operationId: deletePokemonFromParty
+      summary: Delete Collection
+      operationId: deleteCollection
       description: |
-        This is an endpoint that removes a pokemon from its `party`. If the 
-        pokemon no longer exist the endpoint needs to throw a `Not found` error.
+        Remove a `collection` by its `id`.
       tags:
-        - pokemon
-        - party
+        - collection
       security:
         - bearerAuth: []
       parameters:
         - name: id
           in: path
           required: true
-          description: The id of the `pokemon` to delete
+          description: The id of the `collection` to delete
           schema:
             type: string
       responses:
         '200':
-          description: Expected response to be the `pokemon` that was removed
+          description: Expected response to be the `collection` that was removed
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Pokemon"
+                $ref: "#/components/schemas/Collection"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /collections/{id}/{bookId}:
+    delete:
+      summary: Remove book from Collection
+      operationId: deleteBookFromCollection
+      description: |
+        Remove a `book` from a `collection` by its `id`.
+      tags:
+        - collection
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The id of the `collection` that the `book` belongs to.
+          schema:
+            type: string
+        - name: bookId
+          in: path
+          required: true
+          description: The id of the `book` to delete.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Expected response to be the `book` that was removed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookInLibrary"
         default:
           description: unexpected error
           content:
@@ -359,7 +369,19 @@ components:
           type: string
         username:
           type: string
-    AddPokemonRequest:
+    UpsertBookRequest:
+        type: object
+        required:
+          - id
+          - tags
+        properties:
+          id:
+            type: string
+          tags:
+            type: array
+            items:
+              type: string
+    AddBookToCollectionRequest:
         type: object
         required:
           - id
@@ -376,50 +398,67 @@ components:
           type: string
         password:
           type: string
-    Pokemons:
+    Collections:
       type: array
       items:
-        $ref: '#/components/schemas/Pokemon'
-    Pokemon:
+        $ref: '#/components/schemas/Collection'
+    Collection:
       type: object
       properties:
         id:
-          type: integer
+          type: string
         name:
           type: string
-        height:
-          type: integer
-        weight:
-          type: integer
-        image:
+    Books:
+      type: array
+      items:
+        $ref: '#/components/schemas/Book'
+    Book:
+      type: object
+      properties:
+        id:
           type: string
-        abilities:
-          type: array
-          items:
-            type: string
-        moves:
-          type: array
-          items:
-            type: string
-        types:
-          type: array
-          items:
-            type: string
-        stats:
-          type: object
-          properties:
-            hp:
-              type: integer
-            attack:
-              type: integer
-            defense:
-              type: integer
-            specialAttack:
-              type: integer
-            specialDefense:
-              type: integer
-            speed:
-              type: integer
+        title:
+          type: string
+        author:
+          type: string
+        publisher:
+          type: string
+        pages:
+          type: integer
+        created:
+          type: string
+          format: date-time
+        lastModified:
+          type: string
+          format: date-time
+    BooksInLibrary:
+      type: array
+      items:
+        $ref: '#/components/schemas/BookInLibrary'
+    BookInLibrary:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        author:
+          type: string
+        publisher:
+          type: string
+        pages:
+          type: integer
+        tags:
+            type: array
+            items:
+              type: string
+        created:
+          type: string
+          format: date-time
+        lastModified:
+          type: string
+          format: date-time
     Token:
       type: object
       required:
